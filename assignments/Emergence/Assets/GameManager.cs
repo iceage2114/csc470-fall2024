@@ -24,12 +24,12 @@ public class GameManager : MonoBehaviour
 
         Zone[] zones = new Zone[]
         {
-            new Zone { x = 17, y = 34, species = null }, // 12 o'clock
-            new Zone { x = 34, y = 17, species = null }, // 3 o'clock
-            new Zone { x = 17, y = 0,  species = null }, // 5 o'clock
-            new Zone { x = 0,  y = 0,  species = null }, // 7 o'clock
-            new Zone { x = 0,  y = 34, species = null }, // 10 o'clock
-            new Zone { x = 17, y = 17, species = null }  // Center
+            new Zone { x = 17, y = 34, species = null }, // 12 
+            new Zone { x = 34, y = 17, species = null }, // 3 
+            new Zone { x = 17, y = 0,  species = null }, // 5
+            new Zone { x = 0,  y = 0,  species = null }, // 7 
+            new Zone { x = 0,  y = 34, species = null }, // 10 
+            new Zone { x = 17, y = 17, species = null }  // center
         };
 
         List<string> availableSpecies = new List<string>(activeSpeciesList);
