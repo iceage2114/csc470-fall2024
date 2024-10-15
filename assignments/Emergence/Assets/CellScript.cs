@@ -16,7 +16,7 @@ public class CellScript : MonoBehaviour
 
     private static readonly Dictionary<string, Color> speciesColors = new Dictionary<string, Color>()
     {
-        { "pink", Color.magenta },
+        { "pink", Color.green },
         { "water", Color.blue },
         { "fire", Color.red },
         { "honey", Color.yellow },
