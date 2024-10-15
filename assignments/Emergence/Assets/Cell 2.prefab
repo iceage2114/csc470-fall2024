@@ -61,7 +61,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: f0a9357a731544e7084426622e6d10be, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -152,13 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubeRenderer: {fileID: 2953172991876760968}
   alive: 1
-  speciesList:
-  - pink
-  - water
-  - fire
-  - honey
-  - goo
   xIndex: -1
   yIndex: -1
-  currentColor: {r: 0, g: 0.029119492, b: 1, a: 0}
+  currentSpecies: []
   emptyColor: {r: 0.7924528, g: 0.743859, b: 0.743859, a: 1}
