@@ -12,7 +12,6 @@ public class JetpackController : MonoBehaviour
     float drag = 5f;
     float maxFallSpeed = -25f;
 
-    // Sway parameters
     private float swayAmount = 1.5f;
     private float swaySpeed = 1.2f;
     private float swayTime = 0f;
@@ -25,7 +24,6 @@ public class JetpackController : MonoBehaviour
     
     void Update()
     {
-        // Jetpack vertical movement
         if (transform.position.y >= maxHeight) {
             verticalVelocity = -5f;
         }

@@ -1,12 +1,17 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine;
 
 public class CoinController : MonoBehaviour
 {
     public float speed = 15f;
+    private GameManager gameManager;
     
     void Start()
     {
-        // Position coin just off the right side of the camera
+        gameManager = FindObjectOfType<GameManager>();
+        
         float camDistance = Vector3.Distance(transform.position, Camera.main.transform.position);
         Vector3 rightMostPoint = Camera.main.ViewportToWorldPoint(new Vector3(1.1f, 0.5f, camDistance));
         transform.position = new Vector3(rightMostPoint.x, transform.position.y, transform.position.z);
@@ -16,7 +21,6 @@ public class CoinController : MonoBehaviour
     {
         transform.Translate(Vector3.left * speed * Time.deltaTime);
         
-        // Optional: Destroy coin if it goes too far left off screen
         float camDistance = Vector3.Distance(transform.position, Camera.main.transform.position);
         Vector3 leftMostPoint = Camera.main.ViewportToWorldPoint(new Vector3(-0.1f, 0.5f, camDistance));
         if (transform.position.x < leftMostPoint.x)
@@ -29,7 +33,10 @@ public class CoinController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            // You can add score/pickup logic here
+            if (gameManager != null)
+            {
+                gameManager.CollectCoin();
+            }
             Destroy(gameObject);
         }
     }

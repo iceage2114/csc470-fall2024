@@ -1,19 +1,18 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
+using UnityEngine;
 
 public class MissileController : MonoBehaviour
 {
-    public TMP_Text loseText;
     public float speed = 25f;
     private bool isGameActive = true;
+    private GameManager gameManager;
 
     void Start()
     {
-        if (loseText != null)
-        {
-            loseText.gameObject.SetActive(false);
-        }
-
+        gameManager = FindObjectOfType<GameManager>();
+        
         float camDistance = Vector3.Distance(transform.position, Camera.main.transform.position);
         Vector3 rightMostPoint = Camera.main.ViewportToWorldPoint(new Vector3(1.1f, 0.5f, camDistance));
         transform.position = new Vector3(rightMostPoint.x, transform.position.y, transform.position.z);
@@ -37,29 +36,10 @@ public class MissileController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            LoseGame();
-        }
-    }
-
-    private void LoseGame()
-    {
-        isGameActive = false;
-        
-        if (loseText != null)
-        {
-            loseText.gameObject.SetActive(true);
-            loseText.text = "You Lose!";
-        }
-
-        Time.timeScale = 0;
-            
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            MonoBehaviour[] scripts = player.GetComponents<MonoBehaviour>();
-            foreach(MonoBehaviour script in scripts)
+            isGameActive = false;
+            if (gameManager != null)
             {
-                script.enabled = false;
+                gameManager.ShowLoseScreen();
             }
         }
     }
