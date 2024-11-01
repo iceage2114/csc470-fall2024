@@ -58,14 +58,14 @@ public class GameManager : MonoBehaviour
         }
 
         for(int i = 0; i < 10; i++) {
-            float randomX = Random.Range(20f, 600f);
+            float randomX = Random.Range(20f, 500f);
             float randomY = Random.Range(0f, maxCoinHeight);
             Vector3 missilePosition = new Vector3(randomX, randomY, -2.2f);
             Instantiate(missilePrefab, missilePosition, Quaternion.identity);
         }
 
         for(int i = 0; i < 7; i++) {
-            float randomX = Random.Range(20f, 600f);
+            float randomX = Random.Range(20f, 500f);
             float randomY = Random.Range(0f, maxCoinHeight);
             Vector3 shockerPosition = new Vector3(randomX, randomY, -2.2f);
             Instantiate(shockerPrefab, shockerPosition, Quaternion.identity);
