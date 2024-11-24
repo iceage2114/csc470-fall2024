@@ -134,19 +134,16 @@ public class CarScript : MonoBehaviour
     {
         if (Mathf.Approximately(currentGasAmount, maxGasCapacity))
         {
-            // Hide the car panel
             if (carPanel != null)
             {
                 carPanel.SetActive(false);
             }
 
-            // Show victory panel
             if (gameManager != null)
             {
                 gameManager.ShowVictoryPanel();
             }
             
-            // Disable the car object
             gameObject.SetActive(false);
         }
     }

@@ -5,18 +5,15 @@ public class PlayerCameraController : MonoBehaviour
     public GameObject playerPrefab;
     public float moveSpeed = 5f;
     
-    // Gas resource variables
     public float maxGasCapacity = 100f;
-    public float gasCollectionRate = 10f; // Amount of gas collected per second
-    public float gasDepositRate = 15f;    // Amount of gas deposited per second
+    public float gasCollectionRate = 10f;
+    public float gasDepositRate = 15f;
     public float currentGas = 0f;
     private Vector3 movement;
     private GameObject spawnedPlayer;
 
-    // Variables for collision handling
     private GameObject collidedObject;
     
-    // Trigger state tracking
     private bool isInRVTrigger = false;
     private bool isInCarTrigger = false;
 
@@ -33,7 +30,6 @@ public class PlayerCameraController : MonoBehaviour
         float hAxis = Input.GetAxis("Horizontal");
         float vAxis = Input.GetAxis("Vertical");
 
-        // Calculate movement based on camera's forward and right vectors
         Vector3 flatCameraForward = transform.forward;
         flatCameraForward.y = 0;
         movement = flatCameraForward.normalized * moveSpeed * vAxis;
@@ -42,12 +38,10 @@ public class PlayerCameraController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Only move the camera if it's not colliding with an object
         if (collidedObject == null)
         {
             transform.position += movement * Time.fixedDeltaTime;
 
-            // Move the spawned player to match the camera's position
             if (spawnedPlayer != null)
             {
                 spawnedPlayer.transform.position = transform.position;

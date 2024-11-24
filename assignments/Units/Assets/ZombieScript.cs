@@ -9,15 +9,11 @@ public class ZombieNorthScript : MonoBehaviour
     public float spawnHeight = -2f;    
     public float surfaceHeight = 0f;   
     public float emergenceSpeed = 2f;   
-    public int currentRound = 0;
-    public int maxRounds = 3;
-    public float timeBetweenRounds = 5f;
     public NavMeshAgent nma;
 
     private List<GameObject> zombies = new List<GameObject>();
-    private bool waitingForNextRound = false;
-    private float roundTimer = 0f;
     private Transform playerTransform;
+    private bool isRoundComplete = false;
 
     void Start()
     {
@@ -31,21 +27,17 @@ public class ZombieNorthScript : MonoBehaviour
             Debug.LogWarning("No 'Player' tag found");
         }
         
-        waitingForNextRound = true;
-        roundTimer = timeBetweenRounds;
+        SpawnZombies();
     }
 
     private class ZombieScript : MonoBehaviour
     {
-        private enum ZombieMode
-        {
-            Emerging,
-            Chasing
-        }
+        private const int MODE_EMERGING = 1;
+        private const int MODE_CHASING = 2;
 
         private ZombieNorthScript manager;
         private NavMeshAgent navMeshAgent;
-        private ZombieMode currentMode = ZombieMode.Emerging;
+        private int currentMode = MODE_EMERGING;
         private float emergenceDelay;
 
         public void Initialize(ZombieNorthScript manager)
@@ -62,14 +54,13 @@ public class ZombieNorthScript : MonoBehaviour
 
         public void UpdateZombie()
         {
-            switch (currentMode)
+            if (currentMode == MODE_EMERGING)
             {
-                case ZombieMode.Emerging:
-                    HandleEmergence();
-                    break;
-                case ZombieMode.Chasing:
-                    HandleChasing();
-                    break;
+                HandleEmergence();
+            }
+            else if (currentMode == MODE_CHASING)
+            {
+                HandleChasing();
             }
         }
 
@@ -102,9 +93,9 @@ public class ZombieNorthScript : MonoBehaviour
 
         private void StartChasing()
         {
-            currentMode = ZombieMode.Chasing;
+            currentMode = MODE_CHASING;
             Debug.Log("Zombie starting chase mode");
-            HandleChasing(); // Start chasing immediately
+            HandleChasing();
         }
 
         private void HandleChasing()
@@ -119,39 +110,25 @@ public class ZombieNorthScript : MonoBehaviour
 
     void Update()
     {
-        zombies.RemoveAll(z => z == null);
-        ManageRoundProgression();
+        RemoveDestroyedZombies();
         UpdateZombies();
+        CheckRoundComplete();
     }
 
-    void ManageRoundProgression()
+    private void RemoveDestroyedZombies()
     {
-        if (waitingForNextRound)
+        List<GameObject> activeZombies = new List<GameObject>();
+        foreach (GameObject zombie in zombies)
         {
-            roundTimer -= Time.deltaTime;
-            
-            if (roundTimer <= 0f && currentRound < maxRounds)
+            if (zombie != null)
             {
-                currentRound++;
-                Debug.Log($"Round {currentRound} starting");
-                SpawnZombiesForRound();
-                waitingForNextRound = false;
+                activeZombies.Add(zombie);
             }
         }
-        else if (zombies.Count == 0 && currentRound < maxRounds)
-        {
-            Debug.Log("Round Complete");
-            waitingForNextRound = true;
-            roundTimer = timeBetweenRounds;
-        }
-        else if (zombies.Count == 0 && currentRound >= maxRounds)
-        {
-            Debug.Log("All rounds complete");
-            enabled = false;
-        }
+        zombies = activeZombies;
     }
 
-    void SpawnZombiesForRound()
+    void SpawnZombies()
     {
         int zombieCount = Random.Range(3, 7);
         
@@ -176,22 +153,27 @@ public class ZombieNorthScript : MonoBehaviour
         {
             if (zombie != null)
             {
-                zombie.GetComponent<ZombieScript>()?.UpdateZombie();
+                ZombieScript zombieScript = zombie.GetComponent<ZombieScript>();
+                if (zombieScript != null)
+                {
+                    zombieScript.UpdateZombie();
+                }
             }
         }
     }
 
-    public void ForceStartNextRound()
+    void CheckRoundComplete()
     {
-        if (!waitingForNextRound && currentRound < maxRounds)
+        if (!isRoundComplete && zombies.Count == 0)
         {
-            waitingForNextRound = false;
-            roundTimer = 0f;
+            Debug.Log("Round Complete!");
+            isRoundComplete = true;
+            enabled = false;
         }
     }
 
-    public bool AreAllRoundsComplete()
+    public bool IsComplete()
     {
-        return currentRound >= maxRounds && zombies.Count == 0;
+        return isRoundComplete;
     }
 }

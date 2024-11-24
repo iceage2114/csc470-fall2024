@@ -12,25 +12,21 @@ public class GameManagerScript : MonoBehaviour
 
     void Start()
     {
-        // Ensure victory panel is hidden at start
         if (victoryPanel != null)
         {
             victoryPanel.SetActive(false);
         }
 
-        // Show start popup
         if (startPopupCanvas != null)
         {
             startPopupCanvas.SetActive(true);
         }
 
-        // Set time scale to 0 to pause the game
         Time.timeScale = 0f;
     }
 
     void Update()
     {
-        // Check for any key press to start the game
         if (!gameStarted && (Input.anyKeyDown || Input.GetMouseButtonDown(0)))
         {
             StartGame();
@@ -41,13 +37,11 @@ public class GameManagerScript : MonoBehaviour
     {
         gameStarted = true;
         
-        // Hide start popup
         if (startPopupCanvas != null)
         {
             startPopupCanvas.SetActive(false);
         }
 
-        // Resume game time
         Time.timeScale = 1f;
     }
 
@@ -57,14 +51,10 @@ public class GameManagerScript : MonoBehaviour
         {
             gameEnded = true;
             
-            // Show victory panel
             if (victoryPanel != null)
             {
                 victoryPanel.SetActive(true);
             }
-            
-            // Keep time running so player can still look around
-            // Time.timeScale = 1f; // Game continues running
         }
     }
 }
