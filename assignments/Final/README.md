@@ -6,16 +6,16 @@ There is also a cold weather event that randomly kills animals, and snows-in mea
 There will be a UI which will be able to select and spawn wolves and deer with cooldowns.
 The user will also be able to move the birds eye view camera.
 The goal of the user is to reach a count of 100 animals.
-The terrain will be large scale and designed will mountains, trees, lakes, and meadows.
+The terrain will be large scale and designed with mountains, trees, lakes, and meadows.
 
 Timeline:
 Low bar:
 Complete the features described above.
 Mid bar:
 I will add audio and alerts if many wolves/deer start to die off.
-There will be a minimap the player can select and move to
+There will be a minimap the player can select and move to.
 High bar:
-The player can change the terrain by adding or removing mountains
+The player can change the terrain by adding or removing mountains and meadows.
 
 12/3
 Terrain completed and models added
