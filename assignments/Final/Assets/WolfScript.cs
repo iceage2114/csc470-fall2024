@@ -37,6 +37,13 @@ public class WolfScript : MonoBehaviour
     public GameObject wolfPrefab;  // Drag the wolf prefab in the inspector
     private float lastReproductionTime;
 
+    [Header("Carcass Eating Settings")]
+    public float carcassEatingRadius = 3f;  // Radius to detect and eat carcasses
+    public float carcassEatingRate = 10f;   // How quickly wolf can consume carcass
+
+    private CarcassScript currentCarcass;
+    private bool isEatingCarcass = false;
+
     private enum WolfState
     {
         Wandering,
@@ -84,6 +91,11 @@ public class WolfScript : MonoBehaviour
         }
 
         CheckReproduction();
+
+        if (currentState == WolfState.Wandering && currentHunger < maxHunger)
+        {
+            CheckForCarcasses();
+        }
     }
 
     private void HandleWandering()
@@ -155,11 +167,18 @@ public class WolfScript : MonoBehaviour
         // Set destination to deer
         agent.SetDestination(targetDeer.transform.position);
 
-        // Check if deer is caught
+        // When deer is caught, create a carcass instead of destroying
         float distanceToDeer = Vector3.Distance(transform.position, targetDeer.transform.position);
         if (distanceToDeer <= catchRadius)
         {
-            // Catch and destroy deer
+            // Create carcass where deer was
+            GameObject carcassPrefab = Resources.Load<GameObject>("CarcassPrefab");
+            if (carcassPrefab != null)
+            {
+                Instantiate(carcassPrefab, targetDeer.transform.position, Quaternion.identity);
+            }
+            
+            // Destroy the deer
             Destroy(targetDeer.gameObject);
             
             // Start eating
@@ -171,16 +190,71 @@ public class WolfScript : MonoBehaviour
 
     private void HandleEating()
     {
-        // Eat for specified duration
-        if (Time.time - eatingStartTime >= eatingDuration)
+        // Check if eating a regular meal
+        if (currentCarcass == null)
         {
-            // Restore hunger
-            currentHunger = Mathf.Min(currentHunger + 50f, maxHunger);
+            // Existing meal eating logic
+            if (Time.time - eatingStartTime >= eatingDuration)
+            {
+                currentHunger = Mathf.Min(currentHunger + 50f, maxHunger);
+                agent.isStopped = false;
+                lastMealTime = Time.time;
+                currentState = WolfState.Wandering;
+            }
+            return;
+        }
+
+        // Carcass eating logic
+        float distanceToCarcass = Vector3.Distance(transform.position, currentCarcass.transform.position);
+        
+        if (distanceToCarcass <= carcassEatingRadius)
+        {
+            // Stop moving and start eating
+            agent.isStopped = true;
             
-            // Resume wandering
-            agent.isStopped = false;
-            lastMealTime = Time.time;
-            currentState = WolfState.Wandering;
+            // Start eating carcass
+            if (!isEatingCarcass)
+            {
+                currentCarcass.StartEating();
+                isEatingCarcass = true;
+            }
+
+            // Consume carcass nutrition
+            float nutritionEaten = currentCarcass.Eat(carcassEatingRate * Time.deltaTime);
+            currentHunger = Mathf.Min(currentHunger + nutritionEaten, maxHunger);
+
+            // Check if carcass is consumed
+            if (currentCarcass == null)
+            {
+                // Reset to wandering
+                agent.isStopped = false;
+                currentState = WolfState.Wandering;
+                isEatingCarcass = false;
+            }
+        }
+    }
+
+    private void CheckForCarcasses()
+    {
+        CarcassScript[] carcasses = FindObjectsOfType<CarcassScript>();
+        CarcassScript nearestCarcass = null;
+        float closestDistance = carcassEatingRadius;
+
+        foreach (CarcassScript carcass in carcasses)
+        {
+            float distance = Vector3.Distance(transform.position, carcass.transform.position);
+            if (distance < closestDistance && carcass.CanEat())
+            {
+                nearestCarcass = carcass;
+                closestDistance = distance;
+            }
+        }
+
+        if (nearestCarcass != null)
+        {
+            currentCarcass = nearestCarcass;
+            currentState = WolfState.Eating;
+            agent.SetDestination(currentCarcass.transform.position);
         }
     }
 
@@ -279,6 +353,16 @@ public class WolfScript : MonoBehaviour
             // Instantiate new wolf between current wolf and partner
             Vector3 spawnPosition = (transform.position + transform.position) / 2;
             Instantiate(wolfPrefab, spawnPosition, Quaternion.identity);
+        }
+    }
+
+        // Add a method to stop eating carcass if interrupted
+    private void OnDisable()
+    {
+        if (isEatingCarcass && currentCarcass != null)
+        {
+            currentCarcass.StopEating();
+            isEatingCarcass = false;
         }
     }
 }

@@ -41,7 +41,8 @@ public class DeerScript : MonoBehaviour
     public float reproductionCooldown = 100f;  // 5 minutes between reproductions
     public GameObject deerPrefab;  // Drag the deer prefab in the inspector
     private float lastReproductionTime;
-
+    public GameObject carcassPrefab;
+    
     private enum DeerState
     {
         Wandering,
@@ -330,7 +331,15 @@ public class DeerScript : MonoBehaviour
     private void Die()
     {
         currentState = DeerState.Dying;
-        Debug.Log("Deer has died of starvation!");
+        Debug.Log("Deer has died!");
+
+        // Create carcass instead of just destroying
+        GameObject carcassPrefab = Resources.Load<GameObject>("CarcassPrefab");
+        if (carcassPrefab != null)
+        {
+            Instantiate(carcassPrefab, transform.position, Quaternion.identity);
+        }
+
         Destroy(gameObject);
     }
 
