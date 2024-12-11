@@ -1472,6 +1472,77 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d272349bd0b0544ceb552500c9365343, type: 3}
+--- !u!1 &453669174
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 453669175}
+  - component: {fileID: 453669176}
+  m_Layer: 0
+  m_Name: SpawnManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &453669175
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 453669174}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1446425809}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &453669176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 453669174}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a819236f5fc584c6884de4e477df9e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnPoints:
+  - {fileID: 1676906055}
+  - {fileID: 1137889411}
+  - {fileID: 1807342889}
+  - {fileID: 1477542979}
+  - {fileID: 1340143754}
+  - {fileID: 1752278409}
+  - {fileID: 1359958260}
+  - {fileID: 1954193257}
+  - {fileID: 1016470980}
+  deerPrefab: {fileID: 8219677100375732675, guid: 7edf9f3b76c36494bb9db07a57763c9a, type: 3}
+  wolfPrefab: {fileID: 7397148084650190329, guid: f0973a855bf044502af654efe65177c7, type: 3}
+  deerButton: {fileID: 1599855251}
+  wolfButton: {fileID: 1034123710}
+  mainCamera: {fileID: 963194227}
+  maxDeerCount: 25
+  maxWolfCount: 8
+  coldWeatherProbability: 0.005
+  maxAnimalDeaths: 7
+  meadowDepletionAmount: 50
+  eventNotificationText: {fileID: 0}
+  meadowHealth: 100
+  buttonManagerScript: {fileID: 0}
+  currentSpawnMode: 0
+  layerMask:
+    m_Bits: 0
+  spawnedAnimals: []
 --- !u!1001 &460896726
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4449,7 +4520,13 @@ MonoBehaviour:
   wolfPrefab: {fileID: 7397148084650190329, guid: f0973a855bf044502af654efe65177c7, type: 3}
   deerButton: {fileID: 1599855251}
   wolfButton: {fileID: 1034123710}
+  buttonCooldownTime: 5
   mainCamera: {fileID: 963194227}
+  coldWeatherProbability: 0.005
+  maxAnimalDeaths: 7
+  meadowDepletionAmount: 0.2
+  eventNotificationText: {fileID: 0}
+  meadowHealth: 100
   spawnedAnimals: []
 --- !u!4 &1446425809
 Transform:
@@ -4463,7 +4540,9 @@ Transform:
   m_LocalPosition: {x: 543.5, y: 0, z: 505.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 453669175}
+  - {fileID: 2062392021}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1449323652
@@ -6291,6 +6370,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 25046229643642885, guid: 43a28150c40a14df6aa2b249a2993036, type: 3}
   m_PrefabInstance: {fileID: 2038746670}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2062392020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2062392021}
+  m_Layer: 0
+  m_Name: Button Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2062392021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062392020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1446425809}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2108214896
 PrefabInstance:
   m_ObjectHideFlags: 0

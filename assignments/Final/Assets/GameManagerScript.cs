@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class GameManagerScript : MonoBehaviour
 {
@@ -18,8 +19,20 @@ public class GameManagerScript : MonoBehaviour
     public Button deerButton;         // Drag deer spawn button from UI
     public Button wolfButton;          // Drag wolf spawn button from UI
 
+    [Header("Button Cooldown")]
+    public float buttonCooldownTime; // 5 seconds cooldown
+    private bool isDeerButtonOnCooldown = false;
+    private bool isWolfButtonOnCooldown = false;
+
     [Header("Camera")]
     public Camera mainCamera;         // Main camera for raycasting
+
+    [Header("Cold Weather Event")]
+    public float coldWeatherProbability;  // 10% chance per update
+    public int maxAnimalDeaths;              // Max number of animals that can die
+    public float meadowDepletionAmount;   // 20% meadow depletion during cold event
+    public Text eventNotificationText;           // UI Text to show cold weather event
+    public float meadowHealth;
 
     // Spawn mode to track which animal we're trying to spawn
     private enum SpawnMode
@@ -29,8 +42,6 @@ public class GameManagerScript : MonoBehaviour
         Wolf
     }
     private SpawnMode currentSpawnMode = SpawnMode.None;
-
-    // Layer mask for ground
     private LayerMask layerMask;
 
     // List to track spawned animals
@@ -38,7 +49,6 @@ public class GameManagerScript : MonoBehaviour
 
     void OnEnable()
     {
-        // Singleton pattern
         if (instance == null)
         {
             instance = this;
@@ -90,6 +100,123 @@ public class GameManagerScript : MonoBehaviour
     {
         // Handle initial animal spawning or manual spawning
         HandleSpawning();
+
+        CheckColdWeatherEvent();
+    }
+
+    void CheckColdWeatherEvent()
+    {
+        // Random chance of cold weather event
+        if (Random.value < coldWeatherProbability)
+        {
+            StartCoroutine(TriggerColdWeatherEvent());
+        }
+    }
+
+    private IEnumerator StartButtonCooldown(Button button, string buttonType)
+    {
+        // Set cooldown flag to true
+        if (buttonType == "Deer")
+            isDeerButtonOnCooldown = true;
+        else if (buttonType == "Wolf")
+            isWolfButtonOnCooldown = true;
+
+        // Store original color
+        Color originalColor = button.colors.normalColor;
+        
+        // Create a color block with a grayed out color
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.gray;
+        button.colors = colors;
+
+        // Disable button interaction
+        button.interactable = false;
+
+        // Wait for cooldown time
+        yield return new WaitForSeconds(buttonCooldownTime);
+
+        // Reset color
+        colors.normalColor = originalColor;
+        button.colors = colors;
+
+        // Enable button interaction
+        button.interactable = true;
+
+        // Reset cooldown flag
+        if (buttonType == "Deer")
+            isDeerButtonOnCooldown = false;
+        else if (buttonType == "Wolf")
+            isWolfButtonOnCooldown = false;
+    }
+    IEnumerator TriggerColdWeatherEvent()
+    {
+        // Prevent multiple simultaneous events
+        coldWeatherProbability = 0f;
+
+        // Notify player
+        if (eventNotificationText != null)
+        {
+            eventNotificationText.text = "A SEVERE COLD WAVE STRIKES THE MEADOW!";
+            eventNotificationText.color = Color.blue;
+        }
+
+        // Vibrant debug logging
+        Debug.Log("❄️ COLD WEATHER EVENT TRIGGERED ❄️");
+        Debug.Log($"Current population: {spawnedAnimals.Count} animals");
+
+        // Kill some random animals
+        int deathCount = KillRandomAnimals();
+
+        // Deplete meadow health
+        meadowHealth -= meadowDepletionAmount * 100;
+        meadowHealth = Mathf.Clamp(meadowHealth, 0f, 100f);
+
+        // Temporary visual feedback
+        Debug.Log($"🐺 {deathCount} animals perished");
+        Debug.Log($"🌱 Meadow health reduced to: {meadowHealth}%");
+
+        // Reset notification after a few seconds
+        yield return new WaitForSeconds(3f);
+        
+        if (eventNotificationText != null)
+        {
+            eventNotificationText.text = "";
+        }
+
+        // Restore cold weather probability
+        coldWeatherProbability = 0.1f;
+    }
+
+    int KillRandomAnimals()
+    {
+        // Shuffle the list to randomize selection
+        spawnedAnimals.Shuffle();
+
+        int deathCount = 0;
+        int maxDeaths = Mathf.Min(maxAnimalDeaths, spawnedAnimals.Count);
+
+        for (int i = 0; i < maxDeaths; i++)
+        {
+            if (spawnedAnimals[i] != null)
+            {
+                // Visual death effect
+                Renderer renderer = spawnedAnimals[i].GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = Color.gray;
+                }
+
+                // Destroy after a short delay for dramatic effect
+                Destroy(spawnedAnimals[i], 1f);
+                
+                deathCount++;
+            }
+        }
+
+        // Remove destroyed animals from the list
+        spawnedAnimals.RemoveAll(animal => animal == null);
+
+        return deathCount;
     }
 
     void HandleSpawning()
@@ -300,10 +427,16 @@ public class GameManagerScript : MonoBehaviour
         }
 
         currentSpawnMode = SpawnMode.Deer;
+        
+        // Start cooldown for deer button
+        if (deerButton != null)
+        {
+            StartCoroutine(StartButtonCooldown(deerButton, "Deer"));
+        }
+
         Debug.Log("Deer spawn mode activated. Click on the ground to spawn.");
     }
 
-    // Method called by the Wolf button
     public void SetWolfSpawnMode()
     {
         Debug.Log("SetWolfSpawnMode method called");
@@ -315,6 +448,29 @@ public class GameManagerScript : MonoBehaviour
         }
 
         currentSpawnMode = SpawnMode.Wolf;
+        
+        // Start cooldown for wolf button
+        if (wolfButton != null)
+        {
+            StartCoroutine(StartButtonCooldown(wolfButton, "Wolf"));
+        }
+
         Debug.Log("Wolf spawn mode activated. Click on the ground to spawn.");
+    }
+}
+
+public static class ListExtensions 
+{
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = Random.Range(0, n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 }
