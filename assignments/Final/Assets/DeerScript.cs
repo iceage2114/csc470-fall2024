@@ -333,7 +333,6 @@ public class DeerScript : MonoBehaviour
         currentState = DeerState.Dying;
         Debug.Log("Deer has died!");
 
-        // Create carcass using the directly referenced prefab
         if (carcassPrefab != null)
         {
             Instantiate(carcassPrefab, transform.position, Quaternion.identity);

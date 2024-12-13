@@ -28,23 +28,18 @@ public class MeadowScript : MonoBehaviour
         );
     }
 
-    // Method for deer to consume nutrition
     public float ConsumeNutrition(float amount)
     {
-        // Calculate actual nutrition consumed
         float nutritionConsumed = Mathf.Min(amount, currentNutrition);
         currentNutrition -= nutritionConsumed;
 
         return nutritionConsumed;
     }
 
-    // Get current nutrition percentage
     public float GetNutritionPercentage()
     {
         return (currentNutrition / maxNutrition) * 100f;
     }
-
-    // Visualization in scene view (optional)
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;

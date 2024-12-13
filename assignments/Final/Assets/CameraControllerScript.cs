@@ -2,27 +2,20 @@ using UnityEngine;
 
 public class CameraControllerScript : MonoBehaviour
 {
-    // Movement speed of the camera
-    public float moveSpeed = 5f;
+    public float moveSpeed;
 
-    // Zoom speed and limits
     public float zoomSpeed = 10f;
     public float minZoom = 2f;
     public float maxZoom = 10f;
 
-    // Initial camera distance
     public float initialYDistance = -10f;
 
-    // Camera component reference
     private Camera mainCamera;
 
     void Start()
     {
-        // Get the main camera component
         mainCamera = Camera.main;
 
-        // Set initial camera position
-        // Moves the camera back along the Z-axis
         transform.position = new Vector3(
             transform.position.x,
             initialYDistance, 
@@ -32,7 +25,6 @@ public class CameraControllerScript : MonoBehaviour
 
     void Update()
     {
-        // Movement and zoom code remains the same as in the previous script
         Vector3 moveDirection = Vector3.zero;
 
         float scale = 9f;
@@ -57,10 +49,8 @@ public class CameraControllerScript : MonoBehaviour
             moveDirection += Vector3.right * scale;
         }
 
-        // Apply movement
         transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
 
-        // Handle zooming
         float scrollWheel = Input.GetAxis("Mouse ScrollWheel");
         
         if (mainCamera.orthographic)

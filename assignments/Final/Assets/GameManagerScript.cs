@@ -10,32 +10,32 @@ public class GameManagerScript : MonoBehaviour
     public static GameManagerScript instance;
 
     [Header("Spawn Points")]
-    public GameObject[] spawnPoints;  // Drag spawn points in the inspector
+    public GameObject[] spawnPoints;
 
     [Header("Prefabs")]
-    public GameObject deerPrefab;     // Drag deer prefab in the inspector
-    public GameObject wolfPrefab;     // Drag wolf prefab in the inspector
+    public GameObject deerPrefab;
+    public GameObject wolfPrefab;
 
     [Header("UI Buttons")]
     public Button startGameButton;
     public GameObject startGamePanel;
     public GameObject winPanel;
-    public Button deerButton;         // Drag deer spawn button from UI
-    public Button wolfButton;          // Drag wolf spawn button from UI
+    public Button deerButton;
+    public Button wolfButton;
 
     [Header("Button Cooldown")]
-    public float buttonCooldownTime; // 5 seconds cooldown
+    public float buttonCooldownTime;
     private bool isDeerButtonOnCooldown = false;
     private bool isWolfButtonOnCooldown = false;
 
     [Header("Camera")]
-    public Camera mainCamera;         // Main camera for raycasting
+    public Camera mainCamera;
 
     [Header("Cold Weather Event")]
-    public float coldWeatherProbability;  // 10% chance per update
-    public int maxAnimalDeaths;              // Max number of animals that can die
-    public float meadowDepletionAmount;   // 20% meadow depletion during cold event
-    public TMP_Text eventNotificationText;           // UI Text to show cold weather event
+    public float coldWeatherProbability;
+    public int maxAnimalDeaths;
+    public float meadowDepletionAmount;
+    public TMP_Text eventNotificationText;
     public float meadowHealth;
 
     [Header("Population Counter")]
@@ -43,7 +43,7 @@ public class GameManagerScript : MonoBehaviour
     public TMP_Text populationStatusText;
     public int maxPopulation = 60;
 
-    // Spawn mode to track which animal we're trying to spawn
+    // Spawn mode to track which animal trying to spawn
     private enum SpawnMode
     {
         None,
@@ -73,7 +73,6 @@ public class GameManagerScript : MonoBehaviour
 
     void Start()
     {
-        // Add listener for Start Game button
         if (startGameButton != null)
         {
             startGameButton.onClick.AddListener(StartGame);
@@ -83,11 +82,9 @@ public class GameManagerScript : MonoBehaviour
             Debug.LogError("Start Game button is not assigned!");
         }
 
-        // Set up layer mask
         layerMask = LayerMask.GetMask("ground");
         Debug.Log($"Layer mask for ground created: {layerMask}");
 
-        // Add button listeners for spawning
         if (deerButton != null)
         {
             deerButton.onClick.AddListener(() =>
@@ -114,16 +111,11 @@ public class GameManagerScript : MonoBehaviour
             Debug.LogError("Wolf button is not assigned!");
         }
 
-        // Freeze game at the start
         Time.timeScale = 0;
-
-        // Initial spawn logic is delayed until game starts
-        Debug.Log("Game is frozen until the start button is clicked.");
     }
 
     void Update()
     {
-        // Game logic runs only after the game has started
         if (!isGameStarted) return;
 
         HandleSpawning();
@@ -135,7 +127,6 @@ public class GameManagerScript : MonoBehaviour
         isGameStarted = true; // Enable game logic
         Time.timeScale = 1; // Unfreeze the game
 
-        // Hide the start button and panel
         if (startGameButton != null)
         {
             startGameButton.gameObject.SetActive(false);
@@ -153,7 +144,7 @@ public class GameManagerScript : MonoBehaviour
         Debug.Log("Game started!");
     }
 
-    // method to update the population counter
+    // update the population counter
     void UpdatePopulationCounter()
     {
         if (populationCounterText != null)
@@ -199,9 +190,8 @@ public class GameManagerScript : MonoBehaviour
 
     void ShowWinPanel()
     {
-        Time.timeScale = 0; // Pause the game
-        winPanel.SetActive(true); // Display the Win Panel
-        Debug.Log("🎉 Win Condition Reached! Congratulations!");
+        Time.timeScale = 0;
+        winPanel.SetActive(true);
     }
 
 
@@ -251,21 +241,18 @@ public class GameManagerScript : MonoBehaviour
     }
     private IEnumerator TriggerColdWeatherEvent()
     {
-        // Prevent multiple simultaneous events
         coldWeatherProbability = 0f;
 
-        // Notify player
         if (eventNotificationText != null)
         {
             eventNotificationText.text = "A severe cold storm strikes the mountain!";
             eventNotificationText.color = Color.blue;
         }
 
-        // Log the event
         Debug.Log("❄️ COLD WEATHER EVENT TRIGGERED ❄️");
         Debug.Log($"Current population: {spawnedAnimals.Count} animals");
 
-        // Kill some random animals (only once)
+        // Kill some random animals
         int deathCount = KillRandomAnimals();
         UpdatePopulationCounter();
 
@@ -273,20 +260,16 @@ public class GameManagerScript : MonoBehaviour
         meadowHealth -= meadowDepletionAmount;
         meadowHealth = Mathf.Clamp(meadowHealth, 0f, 100f);
 
-        // Log the impact of the event
-        Debug.Log($"🐺 {deathCount} animals perished");
-        Debug.Log($"🌱 Meadow health reduced to: {meadowHealth}%");
+        Debug.Log($"{deathCount} animals perished");
+        Debug.Log($"Meadow health reduced to: {meadowHealth}%");
 
         // Keep the visual effect active for a longer time
-        float extendedDuration = 10f; // Duration in seconds for the cold weather effect to last
+        float extendedDuration = 10f;
         float elapsedTime = 0f;
 
         while (elapsedTime < extendedDuration)
         {
             elapsedTime += Time.deltaTime;
-
-            // Optionally, add any ongoing cold weather effects here
-            // e.g., slow down animal movement, modify environment visuals, etc.
 
             yield return null; // Wait for the next frame
         }
@@ -297,8 +280,7 @@ public class GameManagerScript : MonoBehaviour
             eventNotificationText.text = "";
         }
 
-        // Restore cold weather probability
-        coldWeatherProbability = 0.00005f; // Restore default probability
+        coldWeatherProbability = 0.00005f;
     }
 
 
@@ -321,7 +303,6 @@ public class GameManagerScript : MonoBehaviour
                     renderer.material.color = Color.gray;
                 }
 
-                // Destroy after a short delay for dramatic effect
                 Destroy(spawnedAnimals[i], 1f);
                 
                 deathCount++;
@@ -390,7 +371,6 @@ public class GameManagerScript : MonoBehaviour
     }
     void SpawnAnimals()
     {
-        // More verbose error checking
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogError("No spawn points assigned in GameManagerScript!");
@@ -476,7 +456,7 @@ public class GameManagerScript : MonoBehaviour
                 }
             }
 
-            // Stop if we've reached our target counts
+            // Stop if reached our target counts
             if (deerCount >= 25 && wolfCount >= 8)
                 break;
         }
@@ -486,7 +466,6 @@ public class GameManagerScript : MonoBehaviour
         Debug.Log($"Spawned {deerCount} deer and {wolfCount} wolves");
     }
 
-    // Method called by the Deer button
     public void SetDeerSpawnMode()
     {
         Debug.Log("SetDeerSpawnMode method called");

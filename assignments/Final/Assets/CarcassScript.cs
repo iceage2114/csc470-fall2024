@@ -9,7 +9,7 @@ public class CarcassScript : MonoBehaviour
     public float nutritionDecayRate = 5f;  // How quickly nutrition decreases over time
 
     [Header("Carcass Lifecycle Settings")]
-    public float lifespanTime = 300f;      // 5 minutes before complete decay
+    public float lifespanTime = 300f;
     public float maxEaters = 4;            // Maximum number of wolves that can eat simultaneously
 
     private float spawnTime;

@@ -368,9 +368,6 @@ public class WolfScript : MonoBehaviour
             }
         }
     }
-
-
-        // Add a method to stop eating carcass if interrupted
     private void OnDisable()
     {
         if (isEatingCarcass && currentCarcass != null)
