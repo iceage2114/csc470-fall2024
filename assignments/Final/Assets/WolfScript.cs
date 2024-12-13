@@ -4,23 +4,23 @@ using UnityEngine.AI;
 public class WolfScript : MonoBehaviour
 {
     [Header("Wolf Survival Settings")]
-    public float maxHunger = 100f;     // Maximum hunger level
+    public float maxHunger;     // Maximum hunger level
     public float currentHunger;        // Current hunger level
-    public float hungerDecreaseRate = 15f; // How quickly wolf gets hungry
-    public float timeBetweenMeals = 90f;   // Time between needed meals
+    public float hungerDecreaseRate; // How quickly wolf gets hungry
+    public float timeBetweenMeals;   // Time between needed meals
 
     [Header("Movement Settings")]
-    public float wanderRadius = 30f;   // Area wolf can wander
-    public float minWaitTime = 3f;     // Minimum wait time between movements
-    public float maxWaitTime = 10f;    // Maximum wait time between movements
-    public float minPauseDuration = 1f;// Minimum pause duration
-    public float maxPauseDuration = 4f;// Maximum pause duration
+    public float wanderRadius;   // Area wolf can wander
+    public float minWaitTime;     // Minimum wait time between movements
+    public float maxWaitTime;    // Maximum wait time between movements
+    public float minPauseDuration;// Minimum pause duration
+    public float maxPauseDuration;// Maximum pause duration
 
     [Header("Hunting Settings")]
-    public float huntRadius = 50f;     // Detection radius for deer
-    public float huntDuration = 60f;   // Maximum time spent hunting
-    public float eatingDuration = 20f; // Time spent eating a caught deer
-    public float catchRadius = 2f;     // Distance to catch a deer
+    public float huntRadius;     // Detection radius for deer
+    public float huntDuration;   // Maximum time spent hunting
+    public float eatingDuration; // Time spent eating a caught deer
+    public float catchRadius;     // Distance to catch a deer
 
     private NavMeshAgent agent;
     private DeerScript targetDeer;
@@ -167,20 +167,13 @@ public class WolfScript : MonoBehaviour
         // Set destination to deer
         agent.SetDestination(targetDeer.transform.position);
 
-        // When deer is caught, create a carcass instead of destroying
+        // When deer is caught
         float distanceToDeer = Vector3.Distance(transform.position, targetDeer.transform.position);
         if (distanceToDeer <= catchRadius)
         {
-            // Create carcass where deer was
-            GameObject carcassPrefab = Resources.Load<GameObject>("CarcassPrefab");
-            if (carcassPrefab != null)
-            {
-                Instantiate(carcassPrefab, targetDeer.transform.position, Quaternion.identity);
-            }
-            
-            // Destroy the deer
-            Destroy(targetDeer.gameObject);
-            
+            // Ensure the targetDeer executes its Die method
+            targetDeer.Die();
+
             // Start eating
             agent.isStopped = true;
             currentState = WolfState.Eating;
@@ -188,19 +181,15 @@ public class WolfScript : MonoBehaviour
         }
     }
 
+
     private void HandleEating()
     {
-        // Check if eating a regular meal
+        // Check if carcass still exists
         if (currentCarcass == null)
         {
-            // Existing meal eating logic
-            if (Time.time - eatingStartTime >= eatingDuration)
-            {
-                currentHunger = Mathf.Min(currentHunger + 50f, maxHunger);
-                agent.isStopped = false;
-                lastMealTime = Time.time;
-                currentState = WolfState.Wandering;
-            }
+            agent.isStopped = false;
+            currentState = WolfState.Wandering;
+            isEatingCarcass = false;
             return;
         }
 
@@ -215,15 +204,27 @@ public class WolfScript : MonoBehaviour
             // Start eating carcass
             if (!isEatingCarcass)
             {
-                currentCarcass.StartEating();
-                isEatingCarcass = true;
+                // Check if wolf can eat this carcass
+                if (currentCarcass != null && currentCarcass.CanEat(this))
+                {
+                    isEatingCarcass = true;
+                }
+                else
+                {
+                    // Cannot eat, return to wandering
+                    agent.isStopped = false;
+                    currentState = WolfState.Wandering;
+                    currentCarcass = null;
+                    isEatingCarcass = false;
+                    return;
+                }
             }
 
             // Consume carcass nutrition
-            float nutritionEaten = currentCarcass.Eat(carcassEatingRate * Time.deltaTime);
+            float nutritionEaten = currentCarcass.Eat(this, carcassEatingRate * Time.deltaTime);
             currentHunger = Mathf.Min(currentHunger + nutritionEaten, maxHunger);
 
-            // Check if carcass is consumed
+            // Check if carcass is consumed or destroyed
             if (currentCarcass == null)
             {
                 // Reset to wandering
@@ -243,7 +244,7 @@ public class WolfScript : MonoBehaviour
         foreach (CarcassScript carcass in carcasses)
         {
             float distance = Vector3.Distance(transform.position, carcass.transform.position);
-            if (distance < closestDistance && carcass.CanEat())
+            if (distance < closestDistance && carcass.CanEat(this)) // Pass 'this' to represent the current wolf
             {
                 nearestCarcass = carcass;
                 closestDistance = distance;
@@ -309,7 +310,13 @@ public class WolfScript : MonoBehaviour
 
     private void CheckReproduction()
     {
-        // Only attempt reproduction if enough time has passed
+        // Prevent reproduction during hunting
+        if (currentState == WolfState.Hunting)
+        {
+            return;
+        }
+
+        // Existing reproduction check remains the same
         if (Time.time - lastReproductionTime < reproductionCooldown)
             return;
 
@@ -323,16 +330,16 @@ public class WolfScript : MonoBehaviour
 
             float distance = Vector3.Distance(transform.position, otherWolf.transform.position);
             
-            // Check if close enough and other wolf is also ready to reproduce
+            // Additional check to ensure partner is not hunting
             if (distance <= reproductionRadius && 
-                Time.time - otherWolf.lastReproductionTime >= reproductionCooldown)
+                Time.time - otherWolf.lastReproductionTime >= reproductionCooldown &&
+                otherWolf.currentState != WolfState.Hunting)
             {
                 StartReproduction(otherWolf);
                 break;
             }
         }
     }
-
     private void StartReproduction(WolfScript partnerWolf)
     {
         // Set reproduction time for both wolves
@@ -352,16 +359,23 @@ public class WolfScript : MonoBehaviour
         {
             // Instantiate new wolf between current wolf and partner
             Vector3 spawnPosition = (transform.position + transform.position) / 2;
-            Instantiate(wolfPrefab, spawnPosition, Quaternion.identity);
+            GameObject newWolf = Instantiate(wolfPrefab, spawnPosition, Quaternion.identity);
+
+            // Notify GameManager to track the new wolf
+            if (GameManagerScript.instance != null)
+            {
+                GameManagerScript.instance.TrackNewAnimal(newWolf);
+            }
         }
     }
+
 
         // Add a method to stop eating carcass if interrupted
     private void OnDisable()
     {
         if (isEatingCarcass && currentCarcass != null)
         {
-            currentCarcass.StopEating();
+            currentCarcass.StopEating(this);
             isEatingCarcass = false;
         }
     }

@@ -56,6 +56,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7924d050a5d5a43e698dca91f5edcc0f, type: 3}
+      propertyPath: m_TagString
+      value: wolf
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -86,19 +90,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHunger: 100
   currentHunger: 0
-  hungerDecreaseRate: 0.035
-  timeBetweenMeals: 40
+  hungerDecreaseRate: 0.05
+  timeBetweenMeals: 80
   wanderRadius: 1000
-  minWaitTime: 3
+  minWaitTime: 4
   maxWaitTime: 10
-  minPauseDuration: 1
-  maxPauseDuration: 4
-  huntRadius: 60
+  minPauseDuration: 6
+  maxPauseDuration: 15
+  huntRadius: 110
   huntDuration: 60
   eatingDuration: 20
   catchRadius: 2
-  reproductionRadius: 20
-  reproductionCooldown: 100
+  reproductionRadius: 40
+  reproductionCooldown: 80
   wolfPrefab: {fileID: 7397148084650190329}
   carcassEatingRadius: 3
   carcassEatingRate: 10
@@ -112,7 +116,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 6
+  m_Speed: 8
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120

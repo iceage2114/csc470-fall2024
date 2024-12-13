@@ -4,27 +4,27 @@ using UnityEngine.AI;
 public class DeerScript : MonoBehaviour
 {
     [Header("Deer Survival Settings")]
-    public float maxHunger = 100f;     // Maximum hunger level
+    public float maxHunger;     // Maximum hunger level
     public float currentHunger;        // Current hunger level
-    public float normalHungerDecreaseRate = 0.5f; // Normal hunger decrease rate
-    public float escapingHungerDecreaseRate = 1.5f; // Faster hunger decrease while escaping
-    public float timeBetweenMeals = 40f;   // Time between needed meals
-    public float minEatingDuration = 5f;   // Minimum eating time
-    public float maxEatingDuration = 10f;  // Maximum eating time
+    public float normalHungerDecreaseRate; // Normal hunger decrease rate
+    public float escapingHungerDecreaseRate; // Faster hunger decrease while escaping
+    public float timeBetweenMeals;   // Time between needed meals
+    public float minEatingDuration;   // Minimum eating time
+    public float maxEatingDuration;  // Maximum eating time
 
     [Header("Movement Settings")]
-    public float wanderRadius = 700f;   // Area deer can wander
-    public float minWaitTime = 3f;     // Minimum wait time between movements
-    public float maxWaitTime = 10f;    // Maximum wait time between movements
-    public float minPauseDuration = 1f;// Minimum pause duration
-    public float maxPauseDuration = 4f;// Maximum pause duration
+    public float wanderRadius;   // Area deer can wander
+    public float minWaitTime;     // Minimum wait time between movements
+    public float maxWaitTime;    // Maximum wait time between movements
+    public float minPauseDuration;// Minimum pause duration
+    public float maxPauseDuration;// Maximum pause duration
 
     [Header("Escape Settings")]
-    public float wolfDetectionRadius = 30f; // Radius to detect wolves
-    public float escapeSpeed = 5f;     // Speed when running from wolves
-    public float escapeTime = 100f;      // Duration of escape attempt
+    public float wolfDetectionRadius; // Radius to detect wolves
+    public float escapeSpeed;     // Speed when running from wolves
+    public float escapeTime;      // Duration of escape attempt
     private float lastEscapeTime;  // Track when last escape was initiated
-    public float escapeCooldown = 1f;
+    public float escapeCooldown;
 
     private NavMeshAgent agent;
     private MeadowScript currentMeadow;
@@ -37,9 +37,9 @@ public class DeerScript : MonoBehaviour
     private float escapeStartTime;
 
     [Header("Reproduction Settings")]
-    public float reproductionRadius = 20f;  // How close deer must be to reproduce
-    public float reproductionCooldown = 100f;  // 5 minutes between reproductions
-    public GameObject deerPrefab;  // Drag the deer prefab in the inspector
+    public float reproductionRadius;  // How close deer must be to reproduce
+    public float reproductionCooldown;
+    public GameObject deerPrefab;
     private float lastReproductionTime;
     public GameObject carcassPrefab;
     
@@ -328,13 +328,12 @@ public class DeerScript : MonoBehaviour
             }
         }
     }
-    private void Die()
+    public void Die()
     {
         currentState = DeerState.Dying;
         Debug.Log("Deer has died!");
 
-        // Create carcass instead of just destroying
-        GameObject carcassPrefab = Resources.Load<GameObject>("CarcassPrefab");
+        // Create carcass using the directly referenced prefab
         if (carcassPrefab != null)
         {
             Instantiate(carcassPrefab, transform.position, Quaternion.identity);
@@ -345,23 +344,33 @@ public class DeerScript : MonoBehaviour
 
     private void CheckReproduction()
     {
-        // Only attempt reproduction if enough time has passed
-        if (Time.time - lastReproductionTime < reproductionCooldown)
+        // Prevent reproduction during escaping
+        if (currentState == DeerState.Escaping)
+        {
             return;
+        }
 
-        // Find nearby deer for potential reproduction
+        // Existing reproduction check remains the same
+        if (Time.time - lastReproductionTime < reproductionCooldown)
+        {
+            return;
+        }
+        
+        // Rest of the method remains unchanged
         DeerScript[] nearbyDeers = FindObjectsOfType<DeerScript>();
         foreach (DeerScript otherDeer in nearbyDeers)
         {
             // Skip self and check reproduction readiness
             if (otherDeer == this)
+            {
                 continue;
-
+            }
             float distance = Vector3.Distance(transform.position, otherDeer.transform.position);
-            
-            // Check if close enough and other deer is also ready to reproduce
+
+            // Additional check to ensure partner is not escaping
             if (distance <= reproductionRadius && 
-                Time.time - otherDeer.lastReproductionTime >= reproductionCooldown)
+                Time.time - otherDeer.lastReproductionTime >= reproductionCooldown &&
+                otherDeer.currentState != DeerState.Escaping)
             {
                 StartReproduction(otherDeer);
                 break;
@@ -380,6 +389,7 @@ public class DeerScript : MonoBehaviour
 
         // Use Invoke to delay offspring creation
         Invoke("CreateOffspring", 20f);
+        Debug.Log("Deer reproduce");
     }
 
     private void CreateOffspring()
@@ -388,7 +398,14 @@ public class DeerScript : MonoBehaviour
         {
             // Instantiate new deer between current deer and partner
             Vector3 spawnPosition = (transform.position + transform.position) / 2;
-            Instantiate(deerPrefab, spawnPosition, Quaternion.identity);
+            GameObject newDeer = Instantiate(deerPrefab, spawnPosition, Quaternion.identity);
+
+            // Notify GameManager to track the new deer
+            if (GameManagerScript.instance != null)
+            {
+                GameManagerScript.instance.TrackNewAnimal(newDeer);
+            }
         }
     }
-    }
+
+}

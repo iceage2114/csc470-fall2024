@@ -1898,7 +1898,7 @@ GameObject:
   - component: {fileID: 8202190342339652565}
   m_Layer: 0
   m_Name: Deer 1
-  m_TagString: Untagged
+  m_TagString: deer
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1934,8 +1934,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHunger: 100
   currentHunger: 100
-  normalHungerDecreaseRate: 0.05
-  escapingHungerDecreaseRate: 0.15
+  normalHungerDecreaseRate: 0.1
+  escapingHungerDecreaseRate: 0.25
   timeBetweenMeals: 30
   minEatingDuration: 5
   maxEatingDuration: 10
@@ -1948,10 +1948,10 @@ MonoBehaviour:
   escapeSpeed: 7
   escapeTime: 3
   escapeCooldown: 1
-  reproductionRadius: 20
-  reproductionCooldown: 100
+  reproductionRadius: 25
+  reproductionCooldown: 70
   deerPrefab: {fileID: 8219677100375732675}
-  carcassPrefab: {fileID: 0}
+  carcassPrefab: {fileID: 589315176786080250, guid: af74058719bb44202900131da96375bd, type: 3}
 --- !u!195 &8202190342339652565
 NavMeshAgent:
   m_ObjectHideFlags: 0

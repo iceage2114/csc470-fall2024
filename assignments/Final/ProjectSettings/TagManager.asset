@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Meadow
+  - deer
+  - wolf
   layers:
   - Default
   - TransparentFX

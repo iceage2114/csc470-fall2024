@@ -1,59 +1,71 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class CarcassScript : MonoBehaviour
 {
-    [Header("Carcass Settings")]
-    public float lifespanTime = 300f;  // 5 minutes before despawning
-    public float nutritionalValue = 50f;  // Total nutrition available
-    public float maxNutritionPerWolf = 25f;  // Max nutrition per wolf
-    
-    private float spawnTime;
-    private int currentEaters = 0;
-    private const int MAX_EATERS = 4;
+    [Header("Carcass Nutrition Settings")]
+    public float initialNutrition = 100f;  // Total nutrition available
+    public float currentNutrition;         // Remaining nutrition
+    public float nutritionDecayRate = 5f;  // How quickly nutrition decreases over time
 
-    private void Start()
+    [Header("Carcass Lifecycle Settings")]
+    public float lifespanTime = 300f;      // 5 minutes before complete decay
+    public float maxEaters = 4;            // Maximum number of wolves that can eat simultaneously
+
+    private float spawnTime;
+    private List<WolfScript> currentEaters = new List<WolfScript>();
+
+    private void Awake()
     {
+        // Initialize nutrition and spawn time
+        currentNutrition = initialNutrition;
         spawnTime = Time.time;
     }
 
     private void Update()
     {
-        // Despawn carcass after lifespan
-        if (Time.time - spawnTime >= lifespanTime)
+        // Decay nutrition over time
+        currentNutrition -= nutritionDecayRate * Time.deltaTime;
+
+        // Check if carcass should be destroyed
+        if (currentNutrition <= 0 || Time.time - spawnTime >= lifespanTime)
         {
             Destroy(gameObject);
         }
     }
 
-    public bool CanEat()
+    public bool CanEat(WolfScript wolf)
     {
-        return currentEaters < MAX_EATERS && nutritionalValue > 0;
+        // Check if wolf can eat the carcass
+        return currentNutrition > 0 && 
+               currentEaters.Count < maxEaters && 
+               !currentEaters.Contains(wolf);
     }
 
-    public float Eat(float eatingRate)
+    public float Eat(WolfScript wolf, float eatingRate)
     {
-        // Limit nutrition extraction
-        float nutritionExtracted = Mathf.Min(eatingRate, nutritionalValue, maxNutritionPerWolf);
-        nutritionalValue -= nutritionExtracted;
+        // Ensure wolf can eat
+        if (!CanEat(wolf))
+            return 0f;
 
-        // If completely consumed, destroy carcass
-        if (nutritionalValue <= 0)
-        {
-            Destroy(gameObject);
-        }
+        // Add wolf to eaters if not already eating
+        if (!currentEaters.Contains(wolf))
+            currentEaters.Add(wolf);
+
+        // Calculate nutrition to extract
+        float nutritionExtracted = Mathf.Min(eatingRate, currentNutrition);
+        currentNutrition -= nutritionExtracted;
+
+        // Remove wolf if no more nutrition
+        if (currentNutrition <= 0)
+            currentEaters.Remove(wolf);
 
         return nutritionExtracted;
     }
 
-    public void StartEating()
+    public void StopEating(WolfScript wolf)
     {
-        currentEaters++;
-    }
-
-    public void StopEating()
-    {
-        currentEaters--;
+        // Remove wolf from eaters list
+        currentEaters.Remove(wolf);
     }
 }

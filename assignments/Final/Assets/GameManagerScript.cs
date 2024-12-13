@@ -3,6 +3,7 @@ using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
+using TMPro;
 
 public class GameManagerScript : MonoBehaviour
 {
@@ -16,6 +17,9 @@ public class GameManagerScript : MonoBehaviour
     public GameObject wolfPrefab;     // Drag wolf prefab in the inspector
 
     [Header("UI Buttons")]
+    public Button startGameButton;
+    public GameObject startGamePanel;
+    public GameObject winPanel;
     public Button deerButton;         // Drag deer spawn button from UI
     public Button wolfButton;          // Drag wolf spawn button from UI
 
@@ -31,8 +35,13 @@ public class GameManagerScript : MonoBehaviour
     public float coldWeatherProbability;  // 10% chance per update
     public int maxAnimalDeaths;              // Max number of animals that can die
     public float meadowDepletionAmount;   // 20% meadow depletion during cold event
-    public Text eventNotificationText;           // UI Text to show cold weather event
+    public TMP_Text eventNotificationText;           // UI Text to show cold weather event
     public float meadowHealth;
+
+    [Header("Population Counter")]
+    public TMP_Text populationCounterText;
+    public TMP_Text populationStatusText;
+    public int maxPopulation = 60;
 
     // Spawn mode to track which animal we're trying to spawn
     private enum SpawnMode
@@ -43,6 +52,7 @@ public class GameManagerScript : MonoBehaviour
     }
     private SpawnMode currentSpawnMode = SpawnMode.None;
     private LayerMask layerMask;
+    private bool isGameStarted = false;
 
     // List to track spawned animals
     public List<GameObject> spawnedAnimals = new List<GameObject>();
@@ -63,14 +73,25 @@ public class GameManagerScript : MonoBehaviour
 
     void Start()
     {
+        // Add listener for Start Game button
+        if (startGameButton != null)
+        {
+            startGameButton.onClick.AddListener(StartGame);
+        }
+        else
+        {
+            Debug.LogError("Start Game button is not assigned!");
+        }
+
         // Set up layer mask
         layerMask = LayerMask.GetMask("ground");
         Debug.Log($"Layer mask for ground created: {layerMask}");
 
-        // Add button listeners
+        // Add button listeners for spawning
         if (deerButton != null)
         {
-            deerButton.onClick.AddListener(() => {
+            deerButton.onClick.AddListener(() =>
+            {
                 Debug.Log("Deer Button Clicked!");
                 SetDeerSpawnMode();
             });
@@ -82,7 +103,8 @@ public class GameManagerScript : MonoBehaviour
 
         if (wolfButton != null)
         {
-            wolfButton.onClick.AddListener(() => {
+            wolfButton.onClick.AddListener(() =>
+            {
                 Debug.Log("Wolf Button Clicked!");
                 SetWolfSpawnMode();
             });
@@ -92,17 +114,96 @@ public class GameManagerScript : MonoBehaviour
             Debug.LogError("Wolf button is not assigned!");
         }
 
-        // Initial spawn of animals
-        SpawnAnimals();
+        // Freeze game at the start
+        Time.timeScale = 0;
+
+        // Initial spawn logic is delayed until game starts
+        Debug.Log("Game is frozen until the start button is clicked.");
     }
 
     void Update()
     {
-        // Handle initial animal spawning or manual spawning
-        HandleSpawning();
+        // Game logic runs only after the game has started
+        if (!isGameStarted) return;
 
+        HandleSpawning();
         CheckColdWeatherEvent();
     }
+
+    public void StartGame()
+    {
+        isGameStarted = true; // Enable game logic
+        Time.timeScale = 1; // Unfreeze the game
+
+        // Hide the start button and panel
+        if (startGameButton != null)
+        {
+            startGameButton.gameObject.SetActive(false);
+        }
+
+        if (startGamePanel != null)
+        {
+            startGamePanel.SetActive(false);
+        }
+
+        // Spawn initial animals and update UI
+        SpawnAnimals();
+        UpdatePopulationCounter();
+
+        Debug.Log("Game started!");
+    }
+
+    // method to update the population counter
+    void UpdatePopulationCounter()
+    {
+        if (populationCounterText != null)
+        {
+            // Remove null entries from the list first
+            spawnedAnimals.RemoveAll(animal => animal == null);
+
+            // Update the text to show current population and max population
+            populationCounterText.text = $"Animals alive: {spawnedAnimals.Count}/{maxPopulation}";
+
+            // Update population status text
+            if (populationStatusText != null)
+            {
+                if (spawnedAnimals.Count < 10)
+                {
+                    populationStatusText.text = "Ecosystem Struggling";
+                    populationStatusText.color = Color.red;
+                }
+                else if (spawnedAnimals.Count < 25)
+                {
+                    populationStatusText.text = "Ecosystem Recovering";
+                    populationStatusText.color = Color.yellow;
+                }
+                else if (spawnedAnimals.Count < maxPopulation)
+                {
+                    populationStatusText.text = "Ecosystem Balanced";
+                    populationStatusText.color = Color.green;
+                }
+                else
+                {
+                    populationStatusText.text = "Ecosystem Overcrowded";
+                    populationStatusText.color = Color.red;
+
+                    // Check for win condition
+                    if (winPanel != null && !winPanel.activeSelf)
+                    {
+                        ShowWinPanel();
+                    }
+                }
+            }
+        }
+    }
+
+    void ShowWinPanel()
+    {
+        Time.timeScale = 0; // Pause the game
+        winPanel.SetActive(true); // Display the Win Panel
+        Debug.Log("🎉 Win Condition Reached! Congratulations!");
+    }
+
 
     void CheckColdWeatherEvent()
     {
@@ -148,7 +249,7 @@ public class GameManagerScript : MonoBehaviour
         else if (buttonType == "Wolf")
             isWolfButtonOnCooldown = false;
     }
-    IEnumerator TriggerColdWeatherEvent()
+    private IEnumerator TriggerColdWeatherEvent()
     {
         // Prevent multiple simultaneous events
         coldWeatherProbability = 0f;
@@ -156,36 +257,50 @@ public class GameManagerScript : MonoBehaviour
         // Notify player
         if (eventNotificationText != null)
         {
-            eventNotificationText.text = "A SEVERE COLD WAVE STRIKES THE MEADOW!";
+            eventNotificationText.text = "A severe cold storm strikes the mountain!";
             eventNotificationText.color = Color.blue;
         }
 
-        // Vibrant debug logging
+        // Log the event
         Debug.Log("❄️ COLD WEATHER EVENT TRIGGERED ❄️");
         Debug.Log($"Current population: {spawnedAnimals.Count} animals");
 
-        // Kill some random animals
+        // Kill some random animals (only once)
         int deathCount = KillRandomAnimals();
+        UpdatePopulationCounter();
 
         // Deplete meadow health
-        meadowHealth -= meadowDepletionAmount * 100;
+        meadowHealth -= meadowDepletionAmount;
         meadowHealth = Mathf.Clamp(meadowHealth, 0f, 100f);
 
-        // Temporary visual feedback
+        // Log the impact of the event
         Debug.Log($"🐺 {deathCount} animals perished");
         Debug.Log($"🌱 Meadow health reduced to: {meadowHealth}%");
 
-        // Reset notification after a few seconds
-        yield return new WaitForSeconds(3f);
-        
+        // Keep the visual effect active for a longer time
+        float extendedDuration = 10f; // Duration in seconds for the cold weather effect to last
+        float elapsedTime = 0f;
+
+        while (elapsedTime < extendedDuration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            // Optionally, add any ongoing cold weather effects here
+            // e.g., slow down animal movement, modify environment visuals, etc.
+
+            yield return null; // Wait for the next frame
+        }
+
+        // Reset notification after the extended duration
         if (eventNotificationText != null)
         {
             eventNotificationText.text = "";
         }
 
         // Restore cold weather probability
-        coldWeatherProbability = 0.1f;
+        coldWeatherProbability = 0.00005f; // Restore default probability
     }
+
 
     int KillRandomAnimals()
     {
@@ -224,100 +339,55 @@ public class GameManagerScript : MonoBehaviour
         // Check if we're in a spawn mode and the user has clicked
         if (currentSpawnMode != SpawnMode.None && Input.GetMouseButtonDown(0))
         {
-            Debug.Log($"Mouse clicked in {currentSpawnMode} spawn mode");
-            Debug.Log($"Camera: {mainCamera != null}");
-            Debug.Log($"Layer mask: {layerMask}");
-            Debug.Log($"Layer mask value: {layerMask.value}");
-
             // Create a ray from the mouse position
             Ray mousePositionRay = mainCamera.ScreenPointToRay(Input.mousePosition);
-            Debug.Log($"Mouse position: {Input.mousePosition}");
-            Debug.Log($"Ray origin: {mousePositionRay.origin}");
-            Debug.Log($"Ray direction: {mousePositionRay.direction}");
 
             RaycastHit hitInfo;
 
             // Perform raycast to find where the mouse is pointing
-            bool raycastHit = Physics.Raycast(mousePositionRay, out hitInfo, Mathf.Infinity, layerMask);
-            
-            Debug.Log($"Raycast result: {raycastHit}");
-            
-            if (raycastHit)
-            {
-                Debug.Log($"Raycast hit point: {hitInfo.point}");
-                Debug.Log($"Hit collider: {hitInfo.collider.name}");
-                Debug.Log($"Hit collider layer: {hitInfo.collider.gameObject.layer}");
-            }
-            else
-            {
-                Debug.LogWarning("Raycast did not hit anything on the ground layer!");
-            }
-            // Perform raycast to find where the mouse is pointing
             if (Physics.Raycast(mousePositionRay, out hitInfo, Mathf.Infinity, layerMask))
             {
-                Debug.Log($"Raycast hit point: {hitInfo.point}");
-
-                // Spawn based on current mode
                 GameObject prefabToSpawn = null;
+
+                // Determine which prefab to spawn based on the current mode
                 switch (currentSpawnMode)
                 {
                     case SpawnMode.Deer:
-                        if (deerPrefab != null)
-                        {
-                            prefabToSpawn = deerPrefab;
-                            Debug.Log("Deer prefab selected for spawning");
-                        }
+                        prefabToSpawn = deerPrefab;
                         break;
                     case SpawnMode.Wolf:
-                        if (wolfPrefab != null)
-                        {
-                            prefabToSpawn = wolfPrefab;
-                            Debug.Log("Wolf prefab selected for spawning");
-                        }
+                        prefabToSpawn = wolfPrefab;
                         break;
                 }
 
-                // Sample NavMesh position
-                NavMeshHit navMeshHit;
-                if (NavMesh.SamplePosition(hitInfo.point, out navMeshHit, 10f, NavMesh.AllAreas))
+                if (prefabToSpawn != null)
                 {
-                    // Instantiate the selected prefab
-                    if (prefabToSpawn != null)
+                    // Sample NavMesh position
+                    NavMeshHit navMeshHit;
+                    if (NavMesh.SamplePosition(hitInfo.point, out navMeshHit, 10f, NavMesh.AllAreas))
                     {
+                        // Instantiate the selected prefab
                         GameObject spawnedAnimal = Instantiate(prefabToSpawn, navMeshHit.position, Quaternion.identity);
                         
-                        if (spawnedAnimal == null)
-                        {
-                            Debug.LogError($"Failed to instantiate {currentSpawnMode} animal!");
-                        }
-                        else
-                        {
-                            // Add to tracked animals
-                            spawnedAnimals.Add(spawnedAnimal);
-                            
-                            Debug.Log($"Spawned {currentSpawnMode} at {navMeshHit.position}");
-                        }
-                    }
+                        // Track the spawned animal
+                        spawnedAnimals.Add(spawnedAnimal);
 
-                    // Reset spawn mode
-                    currentSpawnMode = SpawnMode.None;
+                        // Update the population counter
+                        UpdatePopulationCounter();
+
+                        Debug.Log($"Spawned {currentSpawnMode} at {navMeshHit.position}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Could not find a valid NavMesh position at the clicked location.");
+                    }
                 }
-                else
-                {
-                    Debug.LogWarning("Could not find a valid NavMesh position at the clicked location.");
-                }
-                // Add this right after the NavMesh.SamplePosition() check
-                if (!NavMesh.SamplePosition(hitInfo.point, out navMeshHit, 10f, NavMesh.AllAreas))
-                {
-                    Debug.LogError($"NavMesh sampling failed at point {hitInfo.point}");
-                    Debug.LogError($"Raycast hit normal: {hitInfo.normal}");
-                    Debug.LogError($"Raycast hit collider: {hitInfo.collider.name}");
-                    return; // Exit the method if no valid NavMesh position is found
-                }
+
+                // Reset spawn mode after spawning
+                currentSpawnMode = SpawnMode.None;
             }
         }
     }
-
     void SpawnAnimals()
     {
         // More verbose error checking
@@ -410,6 +480,7 @@ public class GameManagerScript : MonoBehaviour
             if (deerCount >= 25 && wolfCount >= 8)
                 break;
         }
+        UpdatePopulationCounter();
 
         // Log the actual spawned counts
         Debug.Log($"Spawned {deerCount} deer and {wolfCount} wolves");
@@ -457,6 +528,16 @@ public class GameManagerScript : MonoBehaviour
 
         Debug.Log("Wolf spawn mode activated. Click on the ground to spawn.");
     }
+    public void TrackNewAnimal(GameObject animal)
+    {
+        if (animal != null)
+        {
+            spawnedAnimals.Add(animal);
+            UpdatePopulationCounter(); // Update the population counter immediately
+            Debug.Log($"{animal.name} added to population. Current population: {spawnedAnimals.Count}");
+        }
+    }
+
 }
 
 public static class ListExtensions 
